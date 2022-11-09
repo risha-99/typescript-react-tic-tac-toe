@@ -4,7 +4,7 @@ import { PlayerDataValue } from "./Enums/PlayerDataValue";
 
 export const Board = () => {
     const [data, setData] = useState(Array(8).fill(''));
-    const [playerDataValue, setPlayerDataValue] = useState<PlayerDataValue>(PlayerDataValue.X);
+    const [turn, setTurn] = useState<PlayerDataValue>(PlayerDataValue.X);
     const [winner, setWinner] = useState("");
     let winPlayer: string = '';
 
@@ -13,9 +13,9 @@ export const Board = () => {
 
     const draw = (e: BaseSyntheticEvent, checkedBlock: number) => {
         if (!e.target.innerHTML) {
-            setPlayerDataValue(playerDataValue === PlayerDataValue.X ? PlayerDataValue.O : PlayerDataValue.X);
-            e.target.innerHTML = playerDataValue;
-            data[checkedBlock] = playerDataValue;
+            setTurn(turn === PlayerDataValue.X ? PlayerDataValue.O : PlayerDataValue.X);
+            e.target.innerHTML = turn;
+            data[checkedBlock] = turn;
             setData(data);
         }
     }
@@ -76,7 +76,7 @@ export const Board = () => {
                 setWinner("It's a Tie");
             }
         }
-    }, [playerDataValue])
+    }, [turn])
 
     return (
         <>
