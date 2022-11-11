@@ -1,5 +1,7 @@
+import { GameMarkers, GameResults } from "./Enums/PlayerDataValue"
+
 export interface WinnerReset {
-    winner: string,
+    winner: GameResults,
     reset(): void
 }
 

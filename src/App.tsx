@@ -6,9 +6,6 @@ import "./css/app.css";
 function App() {
   return (
     <div className="App">
-      <div className='winner shrink'>
-        <div className='winner-text'></div>
-      </div>
       <Board/>
     </div>
   );
