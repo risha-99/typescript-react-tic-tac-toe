@@ -1,114 +1,92 @@
-import { BaseSyntheticEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./css/board.css";
-import { PlayerDataValue } from "./Enums/PlayerDataValue";
+import { GameMarkers, GameResults } from "./Enums/PlayerDataValue";
 import { Winner } from "./Winner";
 
+const newGrid = () => {
+    return Array.from(Array(3), () => new Array(3).fill(GameMarkers.UNTOUCHED))
+}
+
 export const Board = () => {
-    const [data, setData] = useState(Array(8).fill(''));
-    const [turn, setTurn] = useState<PlayerDataValue>(PlayerDataValue.X);
-    const [winner, setWinner] = useState<string>("");
-    let winPlayer: string = '';
+    const [grid, setGrid] = useState<GameMarkers[][]>(newGrid());    
+    const [activePlayer, setActivePlayer] = useState(GameMarkers.X);
+    const [winner, setWinner] = useState<GameResults>(GameMarkers.UNTOUCHED);
 
-    const board = useRef<HTMLInputElement>(null);
-
-    /** Draw the pattern as Players Plays */
-    const draw = (e: BaseSyntheticEvent, checkedBlock: number) => {
-        if (!e.target.innerHTML && !winner) {
-            setTurn(turn === PlayerDataValue.X ? PlayerDataValue.O : PlayerDataValue.X);
-            e.target.innerHTML = turn;
-            data[checkedBlock] = turn;
-            setData(data);
+    const drawMark = (rowIndex: number, columnIndex: number) => {
+        if (grid[rowIndex][columnIndex] !== GameMarkers.UNTOUCHED) {
+            return;
         }
+
+        if(winner === GameMarkers.O || winner === GameMarkers.X){
+            return;
+        }
+
+        setGrid((previousGrid) => {
+            const newGrid = [...previousGrid];
+            newGrid[rowIndex][columnIndex] = activePlayer;
+            return newGrid;
+        });
+
+        setActivePlayer(previousActivePlayer => {
+            return previousActivePlayer === GameMarkers.X ? GameMarkers.O : GameMarkers.X;
+        })
     }
 
-    /** Check similar data pattern horizontally*/
-    const checkValuesHorizontally = () => {
-        for (let row: number = 0; row < 9; row += 3) {
-            if (data[row] !== '') {
-                if (data[row] === data[row + 2] && data[row + 2] === data[row + 1]) {
-                    winPlayer = data[row]
-                    return true
+    const checkForWin = (): GameMarkers => {
+
+        let winner = GameMarkers.UNTOUCHED;
+
+        grid.forEach((row, rowIndex) => {
+            // Check win horizontally
+            if (row[0] !== GameMarkers.UNTOUCHED && row[0] === row[1] && row[1] === row[2]) {
+                winner = row[0];
+            }
+
+            // Check win vertically
+            if (grid[0][rowIndex] === grid[1][rowIndex] && grid[1][rowIndex] === grid[2][rowIndex]) {
+                if (grid[0][rowIndex] !== GameMarkers.UNTOUCHED) {
+                    winner = grid[0][rowIndex];
                 }
             }
-        }
-    }
-
-    /** Check similar data pattern vertically*/
-    const checkValuesVertically = () => {
-        for (let column: number = 0; column < 9; column += 1) {
-            if (data[column] !== '') {
-                if (data[column] === data[column + 3] && data[column + 6] === data[column + 3]) {
-                    winPlayer = data[column];
-                    return true
-                }
-            }
-        }
-    }
-
-    /** Check similar data pattern left diagonally*/
-    const checkValuesLeftDiaglonally = () => {
-        for (let diagonal: number = 0; diagonal < 1; diagonal++) {
-            if (data[diagonal] !== '') {
-                if (data[diagonal] === data[diagonal + 4] && data[diagonal + 4] === data[diagonal + 8]) {
-                    winPlayer = data[diagonal]
-                    return true
-                }
-            }
-        }
-    }
-
-    /** Check similar data pattern right diagonally*/
-    const checkValuesRightDiagonally = () => {
-        for (let diagonal: number = 2; diagonal < 3; diagonal++) {
-            if (data[diagonal] !== '') {
-                if (data[diagonal] === data[diagonal + 2] && data[diagonal] === data[diagonal + 4]) {
-                    winPlayer = data[diagonal]
-                    return true
-                }
-            }
-        }
-    }
-
-    /** Reset the board for new match */
-    const handleReset = () => {
-        let cells: any = board.current?.children;
-        data.forEach((cell, index) => {
-            cells[index].innerHTML = '';
         })
 
-        setData(Array(8).fill(''));
-        setWinner("");
-        setTurn(PlayerDataValue.X);
+        // Check win Diagonally
+        if ((grid[0][0] === grid[1][1] && grid[1][1] === grid[2][2]) || grid[0][2] === grid[1][1] && grid[1][1] === grid[2][0]) {
+            if (grid[1][1] !== GameMarkers.UNTOUCHED) {
+                winner = grid[1][1];
+            }
+        }
+        return winner;
     }
 
-    /** Check condition in board for similar pattern */
-    const checkWin = () => {
-        return checkValuesHorizontally() || checkValuesVertically() || checkValuesLeftDiaglonally() || checkValuesRightDiagonally()
+    const handleReset = () => {
+        setGrid(newGrid());
+        setActivePlayer(GameMarkers.X);
+        setWinner(GameMarkers.UNTOUCHED);
     }
 
     useEffect(() => {
-        if (checkWin()) {
-            setWinner(winPlayer);
-        } else {
-            let totalBoardValue = data.filter((playerData) => playerData !== "")
-            if (totalBoardValue.length === 9) {
-                setWinner("It's a Tie");
+        const winner = checkForWin();
+        if (winner !== GameMarkers.UNTOUCHED) {
+            setWinner(winner);
+        }else {
+            const touchedMarkerCount = grid.flat().filter(marker => marker !== GameMarkers.UNTOUCHED).length;
+            if(touchedMarkerCount === 9){
+                setWinner('Its a tie');
             }
         }
-    }, [turn])
+    }, [grid])
 
     return (
         <>
-            <div className="board" ref={board}>
-                <div className="input input-1" onClick={(e) => draw(e, 0)}></div>
-                <div className="input input-2" onClick={(e) => draw(e, 1)}></div>
-                <div className="input input-3" onClick={(e) => draw(e, 2)}></div>
-                <div className="input input-4" onClick={(e) => draw(e, 3)}></div>
-                <div className="input input-5" onClick={(e) => draw(e, 4)}></div>
-                <div className="input input-6" onClick={(e) => draw(e, 5)}></div>
-                <div className="input input-7" onClick={(e) => draw(e, 6)}></div>
-                <div className="input input-8" onClick={(e) => draw(e, 7)}></div>
-                <div className="input input-9" onClick={(e) => draw(e, 8)}></div>
+            <div className="grid-container">
+                {
+                    grid.map((row, rowIndex) => (
+                        row.map((column, columnIndex) => (
+                            <div key={rowIndex + columnIndex} onClick={() => drawMark(rowIndex, columnIndex)} className="grid-item">{grid[rowIndex][columnIndex]}</div>
+                        ))
+                    ))
+                }
             </div>
 
             <Winner winner={winner} reset={() => handleReset()} />
