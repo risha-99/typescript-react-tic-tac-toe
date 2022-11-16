@@ -90,8 +90,8 @@ export const Board = () => {
         if (checkWin()) {
             setWinner(winPlayer);
         } else {
-            let totalBoardValue = data.filter((playerData) => playerData !== "")
-            if (totalBoardValue.length === 9) {
+            let totalfilledCells = data.filter((playerData) => playerData !== "")
+            if (totalfilledCells.length === 9) {
                 setWinner("It's a Tie");
             }
         }
